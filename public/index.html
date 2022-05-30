@@ -1,0 +1,42 @@
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data:" />
+	<meta http-equiv="X-Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data:" />
+	<title>ffmpegtoweb</title>
+	<link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="shortcut icon" type="image/ico" href="favicon.ico" />
+  <script src="socket.io.js"></script>
+  <script src="jsmpeg.pipe.js"></script>
+</head>
+<body>
+  <button id="start">START</button><br />
+  <canvas id="canvas" width="480" height="270" style="width: 480px; height: 270px;"></canvas>
+  <script>
+    // Basic controls
+    document.getElementById("start").addEventListener("click", (e) => {
+      // initiate a player that can be piped to.
+      var player = new JSMpeg.Player('pipe', {
+          canvas: document.getElementById('canvas')
+      });
+
+      //start socket.io client connection
+      var socket = io();
+
+      //on socket.io connection success
+      socket.on('connect', () => {
+          //pretend this is the command you use to initiate getting H.264 (MPEG) data
+          socket.emit('f', { function: 'getStream', feed: '2' })
+      });
+
+      //on data from "h264" handle
+      socket.on('h264', (data) => {
+          // `data.buffer` is the raw video data from FFMPEG
+          // pretend you are getting data as follows
+          // var data = { buffer:ArrayBuffer }
+          player.write(data.buffer)
+      });
+    });
+  </script>
+</body>
+</html>
