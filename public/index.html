@@ -10,10 +10,12 @@
   <script src="jsmpeg.pipe.js"></script>
 </head>
 <body>
-  <button id="start">START</button><br />
+  <button id="start">START</button> press 'START' to show video stream<br /><br />
   <canvas id="canvas" width="640" height="360" style="width: 640px; height: 360px;"></canvas>
   <script>
-    // Basic controls
+		const remote = '{REMOTE}';
+		const uri = (remote === '{REMOTE}') ? null : remote;
+		// Basic controls
     document.getElementById("start").addEventListener("click", (e) => {
       // initiate a player that can be piped to.
       var player = new JSMpeg.Player('pipe', {
@@ -21,7 +23,7 @@
       });
 
       //start socket.io client connection
-      var socket = io();
+      var socket = io(uri);
 
       //on socket.io connection success
       socket.on('connect', () => {

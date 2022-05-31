@@ -1,5 +1,5 @@
 require('dotenv').config();
-
+const fs = require('fs');
 const path = require('path');
 const events = require('events');
 const child = require('child_process');
@@ -20,6 +20,7 @@ const initEmitter = (feed) => {
 
 const config = {
     debug: process.env.ENV ? process.env.ENV === 'dev' : false,
+    ip: process.env.APP_IP || '127.0.0.1',
     port: process.env.APP_PORT || 8001,
     rtsp: process.env.RTSP_URL || 'rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4',
 };
@@ -30,21 +31,23 @@ server.listen(config.port);
 
 app.use(express.static(path.resolve(__dirname, '../public')));
 
-app.get('/', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../public/index.html'));
+app.get('/remote', (req, res) => {
+    let html = fs.readFileSync(path.resolve(__dirname, '../public/index.html')).toString();
+    html = html.replaceAll("remote = '{REMOTE}'", `remote = '//${config.ip}:${config.port}'`);
+    res.send(html);
 });
 
 // ffmpeg pushed stream to make a pipe
 app.all('/streamIn/:feed', (req, res) => {
   req.Emitter = initEmitter(req.params.feed); // Feed Number (Pipe Number)
-	res.connection.setTimeout(0);
-	req.on('data', (buffer) => {
-		req.Emitter.emit('data', buffer);
+  res.connection.setTimeout(0);
+  req.on('data', (buffer) => {
+    req.Emitter.emit('data', buffer);
     io.to('STREAM_'+req.params.feed).emit('h264', { feed: req.params.feed, buffer });
-	});
-	req.on('end', () => {
-		if (config.debug) console.log('close');
-	});
+  });
+  req.on('end', () => {
+    if (config.debug) console.log('close');
+  });
 })
 
 // socket.io client commands
@@ -76,7 +79,7 @@ app.get(['/h264','/h264/:feed'], (req, res) => {
     req.Emitter.on('data', contentWriter = (buffer) => {
         res.write(buffer);
     });
-    res.on('close', function () {
+    res.on('close', () => {
         req.Emitter.removeListener('data', contentWriter);
     });
 });
@@ -84,8 +87,8 @@ app.get(['/h264','/h264/:feed'], (req, res) => {
 // ffmpeg
 if (config.debug) console.log('Starting FFMPEG');
 var ffmpegString = '-i '+config.rtsp+'';
-ffmpegString += ' -f mpegts -c:v mpeg1video -an http://localhost:'+config.port+'/streamIn/1';
-ffmpegString += ' -f mpegts -c:v mpeg1video -an http://localhost:'+config.port+'/streamIn/2';
+ffmpegString += ' -f mpegts -c:v mpeg1video -an http://'+config.ip+':'+config.port+'/streamIn/1';
+ffmpegString += ' -f mpegts -c:v mpeg1video -an http://'+config.ip+':'+config.port+'/streamIn/2';
 if (ffmpegString.indexOf('rtsp://')>-1) ffmpegString='-rtsp_transport tcp '+ffmpegString;
 if (config.debug) console.log('Executing : ffmpeg '+ffmpegString);
 
