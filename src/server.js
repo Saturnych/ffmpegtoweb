@@ -43,8 +43,8 @@ app.all('/streamIn/:feed', (req, res) => {
     io.to('STREAM_'+req.params.feed).emit('h264', { feed: req.params.feed, buffer });
   });
   req.on('end', () => {
-		if (config.debug) console.log('close');
-	});
+    if (config.debug) console.log('close');
+  });
 })
 
 // socket.io client commands
