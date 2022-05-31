@@ -33,7 +33,7 @@ app.use(express.static(path.resolve(__dirname, '../public')));
 
 app.get('/remote', (req, res) => {
     let html = fs.readFileSync(path.resolve(__dirname, '../public/index.html')).toString();
-    html = html.replaceAll("remote = '{REMOTE}'", `remote = '//192.168.1.35:${config.port}'`);
+    html = html.replaceAll("remote = '{REMOTE}'", `remote = '//${config.ip}:${config.port}'`);
     res.send(html);
 });
 
