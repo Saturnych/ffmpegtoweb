@@ -37,12 +37,12 @@ app.get('/', (req, res) => {
 // ffmpeg pushed stream to make a pipe
 app.all('/streamIn/:feed', (req, res) => {
   req.Emitter = initEmitter(req.params.feed); // Feed Number (Pipe Number)
-	res.connection.setTimeout(0);
-	req.on('data', (buffer) => {
-		req.Emitter.emit('data', buffer);
+  res.connection.setTimeout(0);
+  req.on('data', (buffer) => {
+    req.Emitter.emit('data', buffer);
     io.to('STREAM_'+req.params.feed).emit('h264', { feed: req.params.feed, buffer });
-	});
-	req.on('end', () => {
+  });
+  req.on('end', () => {
 		if (config.debug) console.log('close');
 	});
 })
@@ -76,7 +76,7 @@ app.get(['/h264','/h264/:feed'], (req, res) => {
     req.Emitter.on('data', contentWriter = (buffer) => {
         res.write(buffer);
     });
-    res.on('close', function () {
+    res.on('close', () => {
         req.Emitter.removeListener('data', contentWriter);
     });
 });
